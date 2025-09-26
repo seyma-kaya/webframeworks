@@ -7,7 +7,26 @@ export class ScootersAdaptor {
         console.log("Created Scootersadaptor for " + resourcesUrl);
     }
 
+    getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
     async fetchJson(url, options = null ) {
+        const csrfToken = this.getCookie('XSRF-TOKEN');
+
+        // Add the CSRF token to headers for unsafe methods
+        const method = options?.method?.toUpperCase() || 'GET';
+        const unsafeMethods = ['POST', 'PUT', 'DELETE'];
+
+        if (unsafeMethods.includes(method)) {
+            options.headers = {
+                ...(options.headers || {}),
+                'X-XSRF-TOKEN': csrfToken
+            };
+        }
         let response = await fetch(url, options)
         if (response.ok) {
             return await response.json();
